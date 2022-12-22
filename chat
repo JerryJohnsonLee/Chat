@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+
+import requests
+
+def generate_text(prompt):
+
+    model = 'text-davinci-003'
+    api_key = {USE YOUR KEY HERE}
+    endpoint = "https://api.openai.com/v1/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "model": model,
+        "prompt": prompt,
+        "max_tokens": 2048,
+    }
+
+    response = requests.post(endpoint, headers=headers, json=data)
+    response_json = response.json()
+    try:
+      text = response_json['choices'][0]['text']
+    except:
+      print(response_json)
+      exit()
+    return text
+
+chat_log = ""
+
+while 1:
+    prompt = input('-> ')
+    chat_log += "ME: %s\nAI:" % prompt
+    response = generate_text(chat_log)
+    print(response)
+    chat_log += " %s\n" % response
