@@ -13,3 +13,5 @@ A command line tool to perform continuous conversation with OpenAI ChatGPT
 
 # Usage
 Just type `chat` in your terminal, and enjoy chatting with ChatGPT!
+
+You can use `Ctrl+C` to exit anytime you want.
