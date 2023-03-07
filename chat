@@ -4,9 +4,9 @@ import requests
 
 def generate_text(prompt):
 
-    model = 'text-davinci-003'
+    model = 'gpt-3.5-turbo'
     api_key = {USE YOUR KEY HERE}
-    endpoint = "https://api.openai.com/v1/completions"
+    endpoint = "https://api.openai.com/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -14,14 +14,16 @@ def generate_text(prompt):
 
     data = {
         "model": model,
-        "prompt": prompt,
-        "max_tokens": 2048,
+        "messages": [{
+            "role": "user",
+            "content": prompt
+        }]
     }
 
     response = requests.post(endpoint, headers=headers, json=data)
     response_json = response.json()
     try:
-      text = response_json['choices'][0]['text']
+      text = response_json['choices'][0]['message']['content']
     except:
       print(response_json)
       exit()
