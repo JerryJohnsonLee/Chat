@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 
 import requests
+import sys
+import subprocess
+
+CODE_EXECUTION_PROMPT = \
+    """ME: I want you to help me write some bash commands. I will check the command before I execute it. When you respond with the command, always start with $$ without any additional outputs. For example, I will say "find files with name not containing numbers", and you should respond with "$$ find . -type f -name '*[0-9]*' -prune -o -print;". You should only refer to my last command, unless referencing to older commands are essential. You do not need to give COMMAND OUTPUT in your response. Do you understand?
+AI: Yes, that sounds like a good plan. Do you have a specific command you would like me to help you with?
+ME: """
+GREEN = '\033[92m'
+END = '\033[0m'
 
 def generate_text(prompt):
 
@@ -17,7 +26,7 @@ def generate_text(prompt):
         "messages": [{
             "role": "user",
             "content": prompt
-        }]
+        }]    
     }
 
     response = requests.post(endpoint, headers=headers, json=data)
@@ -31,9 +40,38 @@ def generate_text(prompt):
 
 chat_log = ""
 
-while 1:
-    prompt = input('-> ')
-    chat_log += "ME: %s\nAI:" % prompt
-    response = generate_text(chat_log)
-    print(response)
-    chat_log += " %s\n" % response
+if len(sys.argv) > 1:
+    # command execution mode
+    query = " ".join(sys.argv[1:])
+    chat_log = CODE_EXECUTION_PROMPT + query + "\nAI: "
+    while 1:
+        response = generate_text(chat_log)
+        if not response.startswith("$$"):
+            chat_log += " %s\nME: The code you gave does not start with '$$'. Can you retry?\nAI: " % response
+        else:
+            if "COMMAND OUTPUT" in response:
+                response = response[:response.index("COMMAND OUTPUT")]
+            chat_log += " %s\n" % response
+            command = response.replace("$$", "")
+            user_input = input("Execute command: %s? [y/n]" % (GREEN + command + END))
+            if user_input == "y":
+
+                command_output = subprocess.check_output(command, shell=True, executable='/bin/bash', universal_newlines=True)
+
+                if len(command_output) == 0:
+                    command_output = "No output."
+                print(command_output)
+                chat_log += "COMMAND OUTPUT: %s\n" % command_output
+            else:
+                print("Command not executed.")
+
+        prompt = input('What else would you like to do?\n')
+        chat_log += "ME: %s\nAI:" % prompt
+else:
+    # chat mode
+    while 1:
+        prompt = input('-> ')
+        chat_log += "ME: %s\nAI:" % prompt
+        response = generate_text(chat_log)
+        print(response)
+        chat_log += " %s\n" % response
